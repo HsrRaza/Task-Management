@@ -1,4 +1,5 @@
 import mongoose, { Schema } from "mongoose";
+import { AvailableTaskStatuses, TaskStatusEnum } from "../utils/constants";
 
 const taskSchema = new Schema({
     title: {
@@ -12,7 +13,7 @@ const taskSchema = new Schema({
     project: {
         type: Schema.Types.ObjectId,
         ref: "Project",
-        required: true,
+        required: [],
     },
     assignedTo: {
         type: Schema.Types.ObjectId,
@@ -23,6 +24,21 @@ const taskSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: "User", 
         required:true,
+    },
+    status: {
+        type: String,
+        enum: AvailableTaskStatuses,
+        default:TaskStatusEnum.TODO
+    },
+    attachments: {
+        type: [
+            {
+                url:String,
+                mimetype: String,
+                size: Number
+            }
+        ],
+        default: []
     }
 
 
