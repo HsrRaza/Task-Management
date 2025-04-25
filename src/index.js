@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import connectDB from "./db/index.js";
 import cookieParser from "cookie-parser";
 import express from "express"
+import cors from "cors"
 
 
 dotenv.config({
@@ -27,7 +28,7 @@ app.use(cors({
 
 // othermiddlewares
 app.use(express.json());
-app.use(express.urlencoded({extends: true}));
+app.use(express.urlencoded({extended: true}));
 // app.use(express.static("public"))
 
 

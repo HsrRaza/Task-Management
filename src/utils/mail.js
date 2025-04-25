@@ -27,14 +27,14 @@ const sendMail = async(options)=>{
       const mail ={
         from: "mail.taskmanager@example.com",
         to: options.email,
-        subject:emailText, // plain text
-        html:emailHtml, // html body
+        subject:options.emailText, // plain text
+        html:options.emailHtml, // html body
       };
 
       try {
         await transporter.sendMail(mail)
       } catch (error) {
-        console.error();
+        console.error("error emailed failed ");
         
       }
     
@@ -76,3 +76,4 @@ const forgotPasswordMailGenContent = (username, passwordResetUrl) =>{
     }
 }
     
+export {sendMail, emailVerificationMailGenContent, forgotPasswordMailGenContent}
