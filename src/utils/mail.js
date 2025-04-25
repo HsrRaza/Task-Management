@@ -1,5 +1,8 @@
 import Mailgen from "mailgen";
 import nodemailer from "nodemailer"
+import dotenv from "dotenv"
+
+dotenv.config()
 
 const sendMail = async(options)=>{
 
@@ -15,7 +18,7 @@ const sendMail = async(options)=>{
 
     const transporter = nodemailer.createTransport({
         host:process.env.MAILTRAP_SMTP_HOST,
-        port: 587,
+        port: 2525,
         secure: false, // true for port 465, false for other ports
         auth: {
           user: process.env.MAILTRAP_SMTP_USER,
@@ -27,9 +30,10 @@ const sendMail = async(options)=>{
       const mail ={
         from: "mail.taskmanager@example.com",
         to: options.email,
-        subject:options.emailText, // plain text
-        html:options.emailHtml, // html body
-      };
+        subject:options.subject,
+        text:emailText,
+        html:emailHtml, // html body
+      }
 
       try {
         await transporter.sendMail(mail)

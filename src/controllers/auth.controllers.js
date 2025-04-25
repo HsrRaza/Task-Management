@@ -10,16 +10,20 @@ dotenv.config();
 
 
 const registerUser = asyncHandler(async (req, res) => {
-    const { email, username, passsword, role } = req.body;
+    const { username, email, password, role } = req.body;
 
-    // Validation
+    // input validation 
 
+    // if (!email || !username || !password || !role) {
+    //     throw new ApiError(400, "All fields required");
+
+    // }
 
     try {
 
         // finding an existing user
 
-        const existingUser = await User.findOne(email);
+        const existingUser = await User.findOne({email});
 
 
         if (existingUser) {
@@ -27,73 +31,69 @@ const registerUser = asyncHandler(async (req, res) => {
         };
 
 
-        // all fields must be filled
-
-        if (!email || !username || !passsword || !role) {
-            throw new ApiError(400, "All fields required");
-
-        }
-
 
         // creating a new User
-        const newUser = User.create({
+        const newUser = await  User.create({
             username,
             email,
-            passsword,
+            password,
             role,
 
         });
 
         // check user created or not
         if (!newUser) {
-            throw new ApiError(500, "User Creation Error")
+            throw new ApiError(500, "User Creation Error",)
         }
 
+        // generate verifyToken
 
-        // generate email verification token
 
-        const { hashedToken, unHashedToken, tokenExpiry } = await newUser.generateTemporaryToken()
+        const {hashedToken,  unHashedToken, tokenExpiry} = await newUser.generateTemporaryToken();
 
         newUser.emailVerificationToken = hashedToken;
         newUser.emailVerificationExpiry = tokenExpiry;
 
 
-        await newUser.save({
-            validateBeforeSave: false
-        });
+       
 
-        // verify Email URl
+
+
         const verificationUrl = `${process.env.BASE_URL}/verify-email?token=${unHashedToken}`
 
-        // generating mail 
-        const mailGenContent = emailVerificationMailGenContent(newUser.fullname, verificationUrl);
+        const mailGenerateCon = emailVerificationMailGenContent(newUser.username, verificationUrl)
 
-        try {
-            await sendMail({
+
+        // send  mail
+    try {
+        console.log("insdie try block sendmail");
+        
+          await sendMail({
+            
                 email: newUser.email,
-                subject: "Verify Your Email",
-                mailGenContent
+                subject: "verify Your email",
+                mailGenContent: mailGenerateCon,
+            })
+    } catch (error) {
+        throw new ApiError(400, "Mail cannot send ", error)
+        
+    }
 
-            });
-            new ApiResponse(200, {
-                user: {
-                    _id: newUser._id,
-                    name: newUser.username,
-                    email: newUser.email,
-                    role: newUser.role
-                }
-            }, "user registered successfully . Please Check your email to verify your acccount ");
+       
 
+    await newUser.save();
 
-        } catch (error) {
-            throw new ApiError(500, "Error while sending email ", error)
-        }
-
-
+        return res.status(200).json(
+            new ApiResponse(200, {user:
+                newUser
+            }, "user created ")
+        )
 
 
     } catch (error) {
-        throw new ApiError(500, "User cannot registered something went wrong ")
+        console.error("registeration error", error);
+        
+         throw new ApiError(500, "User cannot registered something went wrong " , error)
     }
 
 
@@ -112,28 +112,28 @@ const loginUser = asyncHandler(async (req, res) => {
             throw new ApiError(404, "User doesn't existed ")
         }
 
-        const isPassword =  await user.isPasswordCorrect(passsword)
+        const isPassword = await user.isPasswordCorrect(passsword)
 
-        if(!isPassword){
+        if (!isPassword) {
             throw new ApiError(401, "Inavlid user crendtials")
         }
 
         // update user access token & refresh token
 
-        const acessToken = await  user.generateAccessToken();
-        const refreshToken = await  user.generateRefreshToken();
+        const acessToken = await user.generateAccessToken();
+        const refreshToken = await user.generateRefreshToken();
 
         // update user refresh token in db
 
         user.refreshToken = refreshToken;
-        user.refreshTokenExpiry =  Date.now() + process.env.REFRESH_TOKEN_EXPIRY;
+        user.refreshTokenExpiry = Date.now() + process.env.REFRESH_TOKEN_EXPIRY;
 
         await user.save();
 
         // set cookie
 
-        const cookieOptions ={
-        httpOnly:true,
+        const cookieOptions = {
+            httpOnly: true,
 
         }
 
@@ -145,7 +145,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
 
 
-        
+
 
 
     } catch (error) {
