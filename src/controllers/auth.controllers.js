@@ -1,11 +1,9 @@
 import { asyncHandler } from "../utils/async-handler.js"
-import {User} from "../models/user.models.js"
+import { User } from "../models/user.models.js"
 import { sendMail, emailVerificationMailGenContent, forgotPasswordMailGenContent } from "../utils/mail.js"
 
 import { ApiResponse } from "../utils/api-response.js"
 import { ApiError } from "../utils/ApiError.js"
-import crypto from "crypto"
-import jwt from "jsonwebtoken"
 
 import dotenv from "dotenv"
 dotenv.config();
@@ -50,52 +48,52 @@ const registerUser = asyncHandler(async (req, res) => {
         if (!newUser) {
             throw new ApiError(500, "User Creation Error")
         }
-        
+
 
         // generate email verification token
 
-        const {hashedToken, unHashedToken, tokenExpiry } = await newUser.generateTemporaryToken()
+        const { hashedToken, unHashedToken, tokenExpiry } = await newUser.generateTemporaryToken()
 
-         newUser.emailVerificationToken = hashedToken;
-         newUser.emailVerificationExpiry = tokenExpiry;
+        newUser.emailVerificationToken = hashedToken;
+        newUser.emailVerificationExpiry = tokenExpiry;
 
 
-         await newUser.save({
+        await newUser.save({
             validateBeforeSave: false
-         });
+        });
 
-         // verify Email URl
-         const verificationUrl = `${process.env.BASE_URL}/verify-email?token=${unHashedToken}`
+        // verify Email URl
+        const verificationUrl = `${process.env.BASE_URL}/verify-email?token=${unHashedToken}`
 
-         // generating mail 
-         const  mailGenContent = emailVerificationMailGenContent(newUser.fullname,  verificationUrl);
+        // generating mail 
+        const mailGenContent = emailVerificationMailGenContent(newUser.fullname, verificationUrl);
 
-         try {
+        try {
             await sendMail({
-                email:newUser.email,
+                email: newUser.email,
                 subject: "Verify Your Email",
                 mailGenContent
 
             });
             new ApiResponse(200, {
                 user: {
-                    _id:newUser._id,
-                    name:newUser.username,
-                    email:newUser.email,
-                    role:newUser.role
+                    _id: newUser._id,
+                    name: newUser.username,
+                    email: newUser.email,
+                    role: newUser.role
                 }
             }, "user registered successfully . Please Check your email to verify your acccount ");
 
-                
-         } catch (error) {
+
+        } catch (error) {
             throw new ApiError(500, "Error while sending email ", error)
-         }
+        }
 
 
 
 
     } catch (error) {
-throw new ApiError(500, "User cannot registered something went wrong ")
+        throw new ApiError(500, "User cannot registered something went wrong ")
     }
 
 
@@ -107,17 +105,52 @@ throw new ApiError(500, "User cannot registered something went wrong ")
 const loginUser = asyncHandler(async (req, res) => {
     const { email, username, passsword, role } = req.body;
 
-   try {
-    const findUser = await User.findOne({email})
+    try {
+        const user = await User.findOne({ email })
 
-    if(!findUser){
-        throw new ApiError(404, "User doesn't existed ")
+        if (!user) {
+            throw new ApiError(404, "User doesn't existed ")
+        }
+
+        const isPassword =  await user.isPasswordCorrect(passsword)
+
+        if(!isPassword){
+            throw new ApiError(401, "Inavlid user crendtials")
+        }
+
+        // update user access token & refresh token
+
+        const acessToken = await  user.generateAccessToken();
+        const refreshToken = await  user.generateRefreshToken();
+
+        // update user refresh token in db
+
+        user.refreshToken = refreshToken;
+        user.refreshTokenExpiry =  Date.now() + process.env.REFRESH_TOKEN_EXPIRY;
+
+        await user.save();
+
+        // set cookie
+
+        const cookieOptions ={
+        httpOnly:true,
+
+        }
+
+        res.cookie()
+
+
+
+
+
+
+
+        
+
+
+    } catch (error) {
+
     }
-    
-    
-   } catch (error) {
-    
-   }
 
 
     // Validation

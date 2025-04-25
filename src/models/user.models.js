@@ -51,6 +51,9 @@ const userSchema = new Schema({
     refreshToken: {
         type: String,
     },
+    refreshTokenExpiry: {
+      type: Date,
+    },
     emailVerificationToken: {
         type: String,
     },
