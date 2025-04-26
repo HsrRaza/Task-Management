@@ -54,9 +54,9 @@ const registerUser = asyncHandler(async (req, res) => {
         newUser.emailVerificationToken = hashedToken;
         newUser.emailVerificationExpiry = tokenExpiry;
 
-   console.log("hashedToken : ",hashedToken);
-   console.log("unhashedToken : ",unHashedToken);
-   
+        console.log("hashedToken : ", hashedToken);
+        console.log("unhashedToken : ", unHashedToken);
+
 
 
 
@@ -87,8 +87,12 @@ const registerUser = asyncHandler(async (req, res) => {
 
         return res.status(200).json(
             new ApiResponse(200, {
-                user:
-                    newUser
+                user: {
+                    _id: newUser._id,
+                    name: newUser.username,
+                    email: newUser.email,
+                    unhasedToken:unHashedToken
+                }
             }, "user created ")
         )
 
@@ -192,7 +196,7 @@ const verifyEmail = asyncHandler(async (req, res) => {
     try {
 
         console.log("hashed TOken", hashedToken);
-        
+
         const user = await User.findOne({
             emailVerificationToken: hashedToken,
             emailVerificationExpiry: { $gt: Date.now() },
