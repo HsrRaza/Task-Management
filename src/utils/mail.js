@@ -52,7 +52,7 @@ const emailVerificationMailGenContent = (username, verificationUrl) =>{
             intro:" Welcome to App! We're very excited to have you on board",
             action: {
                 instruction : "To get started with out App, Please click here:",
-                buttion: {
+                button: {
                     color: "#22BC66",
                     text:"Verify your email",
                     link: verificationUrl,
@@ -69,7 +69,7 @@ const forgotPasswordMailGenContent = (username, passwordResetUrl) =>{
             intro:" We got a request to reset your password",
             action: {
                 instruction : "To change your password click the button",
-                buttion: {
+                button: {
                     color: "#22BC66",
                     text:"reset password",
                     link: passwordResetUrl,
