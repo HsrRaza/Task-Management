@@ -178,10 +178,15 @@ const loginUser = asyncHandler(async (req, res) => {
     // Validation
 })
 const logoutUser = asyncHandler(async (req, res) => {
-    const { emai, username, passsword, role } = req.body;
 
+    const userId = req._id
+    try {
+        
+    } catch (error) {
 
-    // Validation
+        
+    }
+
 })
 const verifyEmail = asyncHandler(async (req, res) => {
     const { verifyToken } = req.params;
