@@ -100,5 +100,6 @@ export {
     createNote,
     getNote,
     getNoteById,
+    updateNote,
     deleteNote
 };
