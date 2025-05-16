@@ -2,6 +2,7 @@ import { asyncHandler } from "../utils/async-handler.js";
 import { Project } from "../models/project.models.js";
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/api-response.js"
+import { ProjectMember } from "../models/projectmember.models.js";
 
 const getProject = asyncHandler(async (req, res) => {
   const { userId } = req.user._id;
@@ -98,25 +99,68 @@ const updateProject = asyncHandler(async (req, res) => {
     )
     if (!newUpdatedProject) {
       throw new ApiError(404, "Project could not able to update")
-      
+
     }
     return res.status(200).
-    json(new ApiResponse(201, newUpdatedProject, "Project Updated  Successfully"))
+      json(new ApiResponse(201, newUpdatedProject, "Project Updated  Successfully"))
 
 
 
 
   } catch (error) {
-
+    throw new ApiError(500, "Error while updating Project")
   }
 
 
 });
 const deleteProject = asyncHandler(async (req, res) => {
 
+  const { projectId } = req.params;
+  try {
+    const checkingProject = await Project.findById(projectId);
+
+    if (!checkingProject) {
+      throw new ApiError(404, "Unable to find Project")
+    }
+
+    const deletingProject = await Project.findByIdAndDelete(projectId).populate("createdBy", "username fullName")
+    if (!deletingProject) {
+      throw new ApiError(404, "Unable to delete the project")
+    }
+
+    return res.status(200).json(
+      new ApiResponse(200, deletingProject, "Project deleted sucessfuly")
+    )
+  } catch (error) {
+    throw new ApiError(500, "Error while deleting the projects")
+
+  }
+
 });
 const addMemberToProject = asyncHandler(async (req, res) => {
+    const {projectId} = req.params;
+    const userid = req.user._id;
 
+    if(!projectId){
+      throw new ApiError(400, "please provide projectId")
+    }
+    if(!userid){
+          throw new ApiError(401 ,"Unathorized req ! login first")
+    }
+      
+
+
+    try {
+      const checkingProject = Project.findById(projectId);
+      if(!checkingProject){
+        throw new ApiError(404, "unable to fetched project")
+      }
+
+      
+      
+    } catch (error) {
+      
+    }
 });
 const getProjectMembers = asyncHandler(async (req, res) => {
 
@@ -137,6 +181,7 @@ export {
   getProject,
   getProjectById,
   updateProject,
+  deleteProject
 }
 
 
