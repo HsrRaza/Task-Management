@@ -3,6 +3,8 @@ import { Project } from "../models/project.models.js";
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/api-response.js"
 import { ProjectMember } from "../models/projectmember.models.js";
+import { User } from "../models/user.models.js"
+import { AvailableUserRoles, UserRolesEnum } from "../utils/constants.js";
 
 const getProject = asyncHandler(async (req, res) => {
   const { userId } = req.user._id;
@@ -138,32 +140,109 @@ const deleteProject = asyncHandler(async (req, res) => {
 
 });
 const addMemberToProject = asyncHandler(async (req, res) => {
-    const {projectId} = req.params;
-    const userid = req.user._id;
+  const { projectId } = req.params;
+  const { userId, role } = req.body
+  const currentUserId = req.user._id;
 
-    if(!projectId){
-      throw new ApiError(400, "please provide projectId")
+
+
+
+  if (!projectId) {
+    throw new ApiError(400, "please provide projectId")
+  }
+  if (!userId) {
+    throw new ApiError(400, "Unathorized req ! login first")
+  }
+
+  if (role && !AvailableUserRoles.includes(role)) {
+    throw new ApiError(400, "Invalid role specified ")
+  }
+
+
+
+
+  try {
+
+    // check project exist
+    const checkingProject = await Project.findById(projectId);
+    if (!checkingProject) {
+      throw new ApiError(404, "unable to fetched project")
     }
-    if(!userid){
-          throw new ApiError(401 ,"Unathorized req ! login first")
+
+
+    // checking the user exist or not
+    const usercheck = await User.findById(userId)
+    if (!usercheck) {
+      throw new ApiError(404, "user does not exist please singup")
     }
-      
 
+    //check if user is admin then he/she can add project admin
 
-    try {
-      const checkingProject = Project.findById(projectId);
-      if(!checkingProject){
-        throw new ApiError(404, "unable to fetched project")
-      }
+    const currentMember = await ProjectMember.findOne({
+      user: currentUserId,
+      projects: projectId,
+    });
 
-      
-      
-    } catch (error) {
-      
+    if (role === UserRolesEnum.PROJECT_ADMIN || currentMember.role !== UserRolesEnum.ADMIN) {
+      throw new ApiError(403, "Only admin can add the project admin")
     }
+
+    //check if the member is already exists
+    const existingMember = await ProjectMember.findOne({
+      user: userId,
+      projects: projectId
+    })
+
+    if (existingMember) {
+      throw new ApiError(400, "User is already a member of the project")
+    }
+
+
+    const newMember = ProjectMember.create({
+      user: userId,
+      projects: projectId,
+      role: role || UserRolesEnum.MEMBER
+    })
+
+
+    return res.status(200).json(
+      new ApiResponse(201, newMember, "Poject member added successfully ")
+    )
+
+
+  } catch (error) {
+    throw new ApiError(500, "error while adding member to projects")
+
+  }
 });
 const getProjectMembers = asyncHandler(async (req, res) => {
+  const { projectId } = req.params;
+  const userId = req.user._id;
 
+  if (!projectId) {
+    throw new ApiError(400, "Provide a valid project Id")
+  }
+  try {
+    const checkProject = await Project.findById(projectId);
+
+    if (!checkProject) {
+      throw new ApiError(400, "invalid project Id")
+    }
+
+
+    const getMembers = await ProjectMember.find({ projects: projectId }).populate("user", "name email")
+
+    if (getMembers.length === 0) {
+      throw new ApiError(404, "No members found for this project.");
+    }
+
+    return res.status(200).json(
+      new ApiResponse(200, getMembers, "Successfully fetched All members")
+    )
+
+  } catch (error) {
+    throw new ApiError(500, "error while fetching the members")
+  }
 });
 const updateProjectMembers = asyncHandler(async (req, res) => {
 
@@ -181,7 +260,9 @@ export {
   getProject,
   getProjectById,
   updateProject,
-  deleteProject
+  deleteProject,
+  addMemberToProject,
+  getProjectMembers
 }
 
 

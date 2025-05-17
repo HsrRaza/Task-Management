@@ -56,6 +56,7 @@ export const validateProjectPermission = (roles = []) =>
         if(!roles.includes(givenRole)){
             throw new ApiError(403, "You do not have permission to perform this action")
         }
+        next();
         
 
 
