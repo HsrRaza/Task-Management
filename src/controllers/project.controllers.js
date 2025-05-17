@@ -245,12 +245,87 @@ const getProjectMembers = asyncHandler(async (req, res) => {
   }
 });
 const updateProjectMembers = asyncHandler(async (req, res) => {
+  const { projectId } = req.params;
+  const userId = req.user._id;
+  const { memberId, role } = req.body
+  if (!projectId) {
+    throw new ApiError(400, "provide a valid project id")
+  }
+  if (!userId) {
+    throw new ApiError(400, "login first")
+  }
 
-});
-const updateMemberRole = asyncHandler(async (req, res) => {
+
+
+
+  try {
+    const projectMember = await ProjectMember.findOne({ projects: projectId })
+
+    if (!projectMember) {
+      throw new ApiError(403, "You are not a member of this projects")
+    }
+
+    const memberToUpdate = await ProjectMember.findOne({
+      user: memberId,
+      projects: projectId
+    })
+
+    if (!memberToUpdate) {
+      throw new ApiError(404, "member is not a part of the projects")
+    }
+
+    // Prevent changing another admin's role
+    if (memberToUpdate.role === UserRolesEnum.ADMIN) {
+      throw new ApiError(403, "You cannot change the role of an admin!");
+    }
+
+    memberToUpdate.role = role;
+    await memberToUpdate.save();
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, memberToUpdate, "Project member role updated successfully!"));
+
+
+  } catch (error) {
+    throw new ApiError(500, "Error cannot update the member of an projects!");
+
+  }
 
 });
 const deleteMember = asyncHandler(async (req, res) => {
+  const { projectId } = req.params
+  const { memberId } = req.body;
+  try {
+
+    const project = await Project.findById(projectId)
+
+     // prevent removing the project creator
+     if (project.createdBy.equals(memberId)) {
+      throw new ApiError(400, "Project creator cannot be removed from the project");
+    }
+    
+    const member = await ProjectMember.findOne({
+      user:memberId,
+      projects:projectId
+    })
+
+    if (!member) {
+      throw new ApiError(404, "You are not a member of the projects")
+    }
+
+    await ProjectMember.findByIdAndDelete(member._id);
+
+
+    return res.status(200).json(
+      new ApiResponse(200, null, "Member removed from project successfully" )
+    )
+
+   
+
+  } catch (error) {
+    throw new ApiError(500, "Internal server error while removing member from project");
+  }
 
 });
 
@@ -262,7 +337,9 @@ export {
   updateProject,
   deleteProject,
   addMemberToProject,
-  getProjectMembers
+  getProjectMembers,
+  updateProjectMembers,
+  deleteMember
 }
 
 
