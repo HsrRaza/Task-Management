@@ -4,7 +4,7 @@ import asyncHandler from "../utils/async-handler.js"
 
 import { Task } from "../models/task.models.js";
 import { TaskStatusEnum } from "../utils/constants";
-import { ProjectMember } from "../models/projectmember.models.js";
+import { ProjectMember, ProjectMember } from "../models/projectmember.models.js";
 import { User } from "../models/user.models.js";
 import { ApiResponse } from "../utils/api-response.js";
 
@@ -18,7 +18,7 @@ const createTask = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Project Id is not valid")
     }
 
-    if (!title, !description, !project, !assignedTo, !assignedBy, !status) {
+    if (!title || !description || !project || !assignedTo || !status) {
         throw new ApiError(400, "All fields are required ")
     }
 
@@ -95,40 +95,135 @@ const getAllTask = asyncHandler(async (req, res) => {
 
 })
 
-const getTaskById = asyncHandler(async(req, res) =>{
-    const {taskId} = req.params;
+const getTaskById = asyncHandler(async (req, res) => {
+    const { taskId } = req.params;
     const userId = req.user._id;
 
-    if(!taskId){
+    if (!taskId) {
         throw new ApiError(400, "provide a valid task Id")
     }
 
-    if(!userId){
+    if (!userId) {
         throw new ApiError(400, "login first")
     }
 
     try {
-         const task = Task.findById(Task).populate("assignedTo").populate("assignedBy").populate("project")
-         if(!task){
+        const task = Task.findById(Task).populate("assignedTo").populate("assignedBy").populate("project")
+        if (!task) {
             throw new ApiError(404, "Unable to get task by id")
-         }
+        }
 
-         return res.status(200).json(
+        return res.status(200).json(
             new ApiResponse(200, task, "Task by id Fetched successfully")
-         )
-         
+        )
+
     } catch (error) {
         console.error(error);
-        
+
         throw new ApiError(500, "Error while fetching task by Id")
-        
+
     }
+})
+
+const updateTask = asyncHandler(async (req, res) => {
+    const { taskId } = req.params;
+    const userId = req.user._id;
+    const { title, description, projectId, assignedTo, status } = req.body
+    if (!title && !description && !projectId && !assignedTo && !status) {
+        throw new ApiError(400, "Please provide at least one field to update!");
+    }
+
+    if (!taskId) {
+        throw new ApiError(400, "provide a valid task Id")
+    }
+
+    if (!userId) {
+        throw new ApiError(400, "login first")
+    }
+
+    try {
+        const task = await Task.findById(taskId)
+
+        if (!task) {
+            throw new ApiError(404, "task not found")
+        }
+
+        const projectMember = await ProjectMember.findOne({ user: userId, projects: task.project })
+        if (!projectMember) {
+            throw new ApiError(403, "You are not a member of this project")
+        }
+        const updatedTask = await Task.findByIdAndUpdate(
+            taskId, 
+            {title, description, projectId, assignedTo, status },
+            {new:true}
+        )
+
+        if(!updateTask){
+            throw new ApiError(403, "You are not a member of this project")
+        }
+
+        return res.status(200).json(
+            new ApiResponse(200,updatedTask , "task is updated ")
+        )
+
+
+    } catch (error) {
+        throw new ApiError(500, "error While updating task")
+
+    }
+})
+
+const deleteTask = asyncHandler(async (req, res) => {
+    const {taskId} = req.params
+    const userId = req.user._id;
+    if (!taskId) {
+        throw new ApiError(400, "provide a valid task Id")
+    }
+
+    if (!userId) {
+        throw new ApiError(400, "login first")
+    }
+
+    try {
+        const task = await Task.findById(taskId)
+
+        if (!task) {
+            throw new ApiError(404, "task not found")
+        }
+
+        
+        const projectMember = await ProjectMember.findOne({user:userId, projects:task.project})
+
+        if (!projectMember) {
+            throw new ApiError(403, "You are not a member of this project")
+        }
+        
+        const deletingTask = await Task.findByIdAndDelete(taskId)
+
+
+        if(!deletingTask){
+            throw new ApiError(403, "unable to delete the task")
+        }
+
+        return res.status(200).json(
+            new ApiResponse(200,deletingTask , "task successfully deleted")
+        )
+
+
+
+    } catch (error) {
+        throw new ApiError(500, "error While deleting the task")
+   
+    }
+
 })
 
 export {
     createTask,
     getAllTask,
-    getAllTask
+    getTaskById,
+    updateTask,
+    deleteTask
 }
 
 
