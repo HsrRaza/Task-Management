@@ -91,7 +91,7 @@ const registerUser = asyncHandler(async (req, res) => {
                     _id: newUser._id,
                     name: newUser.username,
                     email: newUser.email,
-                    unhasedToken:unHashedToken
+                    unhasedToken: unHashedToken
                 }
             }, "user created ")
         )
@@ -181,10 +181,10 @@ const logoutUser = asyncHandler(async (req, res) => {
 
     const userId = req._id
     try {
-        
+
     } catch (error) {
 
-        
+
     }
 
 })
@@ -272,4 +272,9 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 
 
 
-export { registerUser, loginUser, verifyEmail }
+export {
+    registerUser,
+    loginUser,
+    verifyEmail,
+    logoutUser
+}

@@ -6,7 +6,8 @@ import {userRegistrationValidator, userLoginValidator} from '../validators/index
 import {
     registerUser,
     loginUser,
-    verifyEmail
+    verifyEmail,
+    logoutUser
 } from "../controllers/auth.controllers.js"
 
 const router = Router()
@@ -14,6 +15,7 @@ const router = Router()
 router.route("/register").post(userRegistrationValidator(), validate, registerUser)
 router.route("/login").post(userLoginValidator(),validate,  loginUser)
 router.route("/verify/:verifyToken").get(verifyEmail)
+router.route("/logout/:id").get(logoutUser)
 
 
 export default router
