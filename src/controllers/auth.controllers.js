@@ -276,5 +276,9 @@ export {
     registerUser,
     loginUser,
     verifyEmail,
-    logoutUser
+    logoutUser,
+    resendVerificationEmail,
+    refreshAcessToken,
+    forgetPasswordRequest,
+    changeCureentPassword,
 }
