@@ -24,3 +24,4 @@ router.route("/").get(logoutUser)
 
 
 export default router
+
